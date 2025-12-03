@@ -34,7 +34,7 @@ Implementação do padrão **Iterator** aplicada a um sistema de gerenciamento d
 - Separação clara entre a coleção e o mecanismo de acesso
 - Flexibilidade na implementação de diferentes estruturas de dados
 
-Também há uma interface web de demonstração interativa incluída: [Interface de Demonstração](http://localhost:8000/index.html)
+Também há uma interface web de demonstração interativa incluída: [Interface de Demonstração](https://camposcodes.github.io/PadroesComportamentais-Iterator/)
 <p align="center">
 	<img src="./screenshot.png" alt="Captura da interface - Demonstração Iterator" width="900" />
 </p>
