@@ -1,0 +1,1469 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Padrão Iterator - Gerenciador de Estoque</title>
+    <style>
+        :root {
+            --bg: #f6f8fa;
+            --surface: #ffffff;
+            --muted: #6a737d;
+            --border: #e1e4e8;
+            --accent: #0366d6;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #d73a49;
+            --shadow: 0 1px 2px rgba(27, 31, 35, 0.04), 0 8px 24px rgba(27, 31, 35, 0.08);
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            background: var(--bg);
+            color: #24292e;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 24px auto;
+            padding: 0 20px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin: 0 0 24px 0;
+            color: #0b2d4a;
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            margin: 0 0 14px 0;
+            color: #24292e;
+        }
+
+        h3 {
+            font-size: 1rem;
+            margin: 0 0 12px 0;
+            color: #24292e;
+        }
+
+        h4 {
+            font-size: 0.95rem;
+            margin: 0 0 8px 0;
+            color: #24292e;
+        }
+
+        p {
+            margin: 0 0 12px 0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+        }
+
+        .header {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .header h1 {
+            margin-bottom: 12px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .stat {
+            padding: 12px;
+            background: #f6f8fa;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            color: #24292e;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+
+        .builder-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #24292e;
+        }
+
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            background: var(--surface);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+
+        .checkbox-item input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .validation-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .validation-box.success {
+            background: #d4edda;
+            border-color: var(--success);
+        }
+
+        .validation-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 4px 0;
+            font-size: 0.85rem;
+        }
+
+        .validation-item::before {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .validation-item.invalid::before {
+            content: "✗";
+            background: var(--danger);
+            color: white;
+        }
+
+        .validation-item.valid::before {
+            content: "✓";
+            background: var(--success);
+            color: white;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        button:hover {
+            opacity: 0.95;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(3, 102, 214, 0.2);
+        }
+
+        button.primary {
+            background: var(--accent);
+            color: white;
+            border-color: transparent;
+        }
+
+        button.secondary {
+            background: var(--success);
+            color: white;
+            border-color: transparent;
+        }
+
+        button.clear {
+            background: var(--muted);
+            color: white;
+            border-color: transparent;
+        }
+
+        .preview-box {
+            background: linear-gradient(180deg, #f0f9ff, #e0f2fe);
+            border: 2px solid var(--accent);
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .preview-icon {
+            font-size: 3rem;
+            margin-bottom: 8px;
+        }
+
+        .preview-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #0b2d4a;
+            margin-bottom: 8px;
+        }
+
+        .preview-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .detail-item {
+            padding: 6px;
+            background: #f6f8fa;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .detail-label {
+            color: var(--muted);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .products-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            margin: 12px 0;
+            align-items: center;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        .radio-item label {
+            cursor: pointer;
+            margin: 0;
+        }
+
+        .main-sections-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .main-sections-grid .card {
+            margin-bottom: 0;
+        }
+
+        .product-item {
+            background: linear-gradient(180deg, #f0f9ff, #e0f2fe);
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .product-item:hover {
+            box-shadow: 0 4px 12px rgba(3, 102, 214, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .product-item.unavailable {
+            opacity: 0.6;
+            border-color: var(--muted);
+            background: linear-gradient(180deg, #f0f0f0, #e0e0e0);
+        }
+
+        .product-item .icon {
+            font-size: 1.8rem;
+            margin-bottom: 4px;
+        }
+
+        .product-item .name {
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .product-item .type {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+
+        .product-item .status {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        .product-item .status.available {
+            background: #d4edda;
+            color: var(--success);
+        }
+
+        .product-item .status.unavailable {
+            background: #ffe5e5;
+            color: var(--danger);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .approach {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        .approach-title {
+            font-weight: 700;
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .approach.bad .approach-title {
+            background: var(--danger);
+        }
+
+        .approach.good .approach-title {
+            background: var(--success);
+        }
+
+        .code-block {
+            background: #f6f8fa;
+            border-left: 3px solid var(--border);
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+            overflow-x: auto;
+        }
+
+        .approach.bad .code-block {
+            border-left-color: var(--danger);
+            background: #ffe5e5;
+        }
+
+        .approach.good .code-block {
+            border-left-color: var(--success);
+            background: #e5f5e5;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .metric {
+            padding: 8px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+
+        .metric.bad {
+            background: #ffe5e5;
+            border: 1px solid var(--danger);
+        }
+
+        .metric.good {
+            background: #e5f5e5;
+            border: 1px solid var(--success);
+        }
+
+        .metric-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin: 4px 0;
+        }
+
+        .metric.bad .metric-value {
+            color: var(--danger);
+        }
+
+        .metric.good .metric-value {
+            color: var(--success);
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .result-box {
+            background: linear-gradient(180deg, #fff9e6, #ffe6cc);
+            border: 2px dashed #ffc107;
+            border-radius: 6px;
+            padding: 18px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .result-box h4 {
+            color: #d97706;
+            margin: 0 0 8px 0;
+        }
+
+        .result-box p {
+            color: #b45309;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .concept-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .concept {
+            padding: 12px;
+            background: #f6f8fa;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent);
+            font-size: 0.9rem;
+        }
+
+        .concept strong {
+            display: block;
+            color: #0b2d4a;
+            margin-bottom: 4px;
+        }
+
+        .concept p {
+            margin: 0;
+            font-size: 0.85rem;
+        }
+
+        .concept ul {
+            margin: 4px 0 0 16px;
+            padding: 0;
+            font-size: 0.85rem;
+        }
+
+        .concept li {
+            margin: 2px 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 24px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .empty-state-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .iterator-visual {
+            background: linear-gradient(180deg, #f8fafb, #ffffff);
+            border: 2px solid var(--accent);
+            border-radius: 6px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .iterator-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .iterator-item {
+            width: 50px;
+            height: 50px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: 2px solid var(--border);
+            background: var(--surface);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .iterator-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(3, 102, 214, 0.2);
+        }
+
+        .iterator-item.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.2);
+        }
+
+        .iterator-item.visited {
+            background: #e5f5e5;
+            border-color: var(--success);
+        }
+
+        .iterator-arrow {
+            color: var(--accent);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 18px;
+        }
+
+        .benefit-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 14px;
+            text-align: center;
+        }
+
+        .benefit-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .benefit-title {
+            font-weight: 600;
+            color: #0b2d4a;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        .benefit-description {
+            font-size: 0.85rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .timeline-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            color: white;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .timeline-content {
+            padding: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+
+        .timeline-content h4 {
+            color: #0b2d4a;
+        }
+
+        .expandable-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            padding: 12px;
+            margin: 0 0 14px 0;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            border-radius: 6px;
+            text-align: left;
+        }
+
+        .expandable-header h2 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .expandable-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--accent);
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent);
+            transition: transform 0.3s ease;
+        }
+
+        .expandable-header.collapsed .expandable-icon {
+            transform: rotate(-90deg);
+        }
+
+        .expandable-content {
+            max-height: 2000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            opacity: 1;
+            margin-bottom: 16px;
+        }
+
+        .expandable-header.collapsed ~ .expandable-content {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .section-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--border), transparent);
+            margin: 24px 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
+        }
+
+        @media (max-width: 1000px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .main-sections-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 12px auto;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .builder-form {
+                grid-template-columns: 1fr;
+            }
+
+            .concept-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .products-list {
+                grid-template-columns: 1fr;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .control-group {
+                flex-direction: column;
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline-item {
+                grid-template-columns: 50px 1fr;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Explicativo -->
+        <div class="header">
+            <h1>🔄 Padrão Iterator - Gerenciador de Estoque</h1>
+            <p>Entenda como o padrão Iterator oferece uma forma uniforme de acessar elementos de uma coleção sequencialmente, sem expor sua estrutura interna.</p>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number">5</div>
+                    <div class="stat-label">Testes Unitários</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Métodos de Contagem</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">2</div>
+                    <div class="stat-label">Tipos de Produto</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">Escalabilidade</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seções Principais - Lado a Lado -->
+        <div class="main-sections-grid">
+            <!-- Seção: Sistema de Estoque Interativo -->
+            <div class="card">
+                <button class="expandable-header" onclick="toggleSection(this)">
+                    <h2>
+                        <span class="expandable-icon">+</span>
+                        📦 Gerenciador de Estoque Interativo
+                    </h2>
+                </button>
+                <div class="expandable-content">
+                    <div class="main-grid">
+                        <!-- Painel de Adição -->
+                        <div>
+                            <h3>Adicionar Produto</h3>
+                            <div class="builder-form">
+                                <div class="form-group full">
+                                    <label class="form-label">Nome do Produto</label>
+                                    <input type="text" id="produtoNome" placeholder="Ex: Café">
+                                </div>
+                                <div class="form-group full">
+                                    <label class="form-label">Tipo de Produto</label>
+                                    <div class="radio-group">
+                                        <div class="radio-item">
+                                            <input type="radio" id="tipoBebida" name="produtoTipo" value="BEBIDA">
+                                            <label for="tipoBebida">🥤 Bebida</label>
+                                        </div>
+                                        <div class="radio-item">
+                                            <input type="radio" id="tipoComida" name="produtoTipo" value="COMIDA">
+                                            <label for="tipoComida">🍰 Comida</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="checkbox-group">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="produtoDisponivel" checked>
+                                    Disponível
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <button class="primary" onclick="adicionarProduto()">Adicionar Produto</button>
+                                <button class="clear" onclick="limparEstoque()">Limpar Tudo</button>
+                            </div>
+                        </div>
+
+                        <!-- Painel de Visualização -->
+                        <div>
+                            <h3>Produtos no Estoque</h3>
+                            <div class="products-list" id="produtosLista">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">📭</div>
+                                    <p>Nenhum produto adicionado ainda</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resultado de Contagem -->
+                    <div class="result-box">
+                        <h4>📊 Resultado das Contagens via Iterator</h4>
+                        <p id="resultadoIterador">Adicione produtos para ver os resultados das iterações</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção: Visualização do Iterator em Ação -->
+            <div class="card">
+                <button class="expandable-header" onclick="toggleSection(this)">
+                    <h2>
+                        <span class="expandable-icon">+</span>
+                        🔄 Iterator em Ação
+                    </h2>
+                </button>
+                <div class="expandable-content">
+                    <p>Veja como o Iterator percorre sequencialmente cada elemento do estoque:</p>
+                    
+                    <div class="iterator-visual" id="iteratorVisual">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">👁️</div>
+                            <p>Adicione produtos para visualizar a iteração</p>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <button class="primary" onclick="iniciarIteracao()">Iniciar Iteração</button>
+                        <button class="secondary" onclick="proximoElemento()">Próximo Elemento</button>
+                        <button class="clear" onclick="reiniciarIteracao()">Reiniciar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção: O que é o Padrão Iterator -->
+        <div class="card">
+            <button class="expandable-header" onclick="toggleSection(this)">
+                <h2>
+                    <span class="expandable-icon">+</span>
+                    O que é o Padrão Iterator?
+                </h2>
+            </button>
+            <div class="expandable-content">
+                <p>O <strong>Iterator</strong> é um padrão de design comportamental que fornece uma maneira de acessar sequencialmente os elementos de uma coleção sem expor sua representação interna. Em nosso sistema de gerenciamento de estoque, o padrão permite iterar sobre os produtos de forma uniforme.</p>
+                
+                <div class="concept-grid">
+                    <div class="concept">
+                        <strong>🎯 Objetivo Principal</strong>
+                        <p>Fornecer uma interface uniforme para percorrer elementos de uma coleção independente de sua implementação interna.</p>
+                    </div>
+                    <div class="concept">
+                        <strong>📋 Problema Resolvido</strong>
+                        <p>Sem o padrão, teríamos que conhecer a estrutura interna (ArrayList, LinkedList, etc) para percorrer os elementos.</p>
+                    </div>
+                    <div class="concept">
+                        <strong>✅ Benefício Principal</strong>
+                        <p>Encapsulamento da estrutura de dados e abstração da iteração, permitindo mudanças internas sem afetar o cliente.</p>
+                    </div>
+                    <div class="concept">
+                        <strong>🔗 Implementação</strong>
+                        <p>Através da interface <code>Iterable&lt;T&gt;</code> e <code>Iterator&lt;T&gt;</code> do Java, que fornecem contatos consistentes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção: Benefícios do Padrão -->
+        <div class="card">
+            <button class="expandable-header" onclick="toggleSection(this)">
+                <h2>
+                    <span class="expandable-icon">+</span>
+                    ⭐ Benefícios do Padrão Iterator
+                </h2>
+            </button>
+            <div class="expandable-content">
+                <div class="benefits-grid">
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🔒</div>
+                        <div class="benefit-title">Encapsulamento</div>
+                        <div class="benefit-description">A estrutura interna do Estoque (ArrayList) fica privada e protegida.</div>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🔄</div>
+                        <div class="benefit-title">Abstração</div>
+                        <div class="benefit-description">Acesso uniforme a qualquer coleção implementando Iterable.</div>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🔧</div>
+                        <div class="benefit-title">Flexibilidade</div>
+                        <div class="benefit-description">Trocar ArrayList por LinkedList sem alterar o cliente.</div>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">📈</div>
+                        <div class="benefit-title">Escalabilidade</div>
+                        <div class="benefit-description">Funciona com mil ou um milhão de produtos igualmente.</div>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🧪</div>
+                        <div class="benefit-title">Testabilidade</div>
+                        <div class="benefit-description">Fácil mockar e testar comportamento em testes unitários.</div>
+                    </div>
+                    <div class="benefit-card">
+                        <div class="benefit-icon">🔌</div>
+                        <div class="benefit-title">Desacoplamento</div>
+                        <div class="benefit-description">Código cliente não depende de estrutura específica de dados.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção: Comparação Com vs Sem Padrão -->
+        <div class="card">
+            <button class="expandable-header" onclick="toggleSection(this)">
+                <h2>
+                    <span class="expandable-icon">+</span>
+                    ⚖️ Com Padrão vs Sem Padrão
+                </h2>
+            </button>
+            <div class="expandable-content">
+                <div class="comparison-grid">
+                    <div class="approach bad">
+                        <div class="approach-title">❌ SEM Padrão Iterator</div>
+                        <h4>Acesso Direto à Lista</h4>
+                        <div class="code-block">
+List&lt;Produto&gt; produtos = estoque.getProdutos();
+for(int i = 0; i &lt; produtos.size(); i++) {
+    Produto p = produtos.get(i);
+    // lógica...
+}</div>
+                        <div class="metrics-grid">
+                            <div class="metric bad">
+                                <div class="metric-label">Acoplamento</div>
+                                <div class="metric-value">Muito Alto</div>
+                            </div>
+                            <div class="metric bad">
+                                <div class="metric-label">Flexibilidade</div>
+                                <div class="metric-value">Baixa</div>
+                            </div>
+                            <div class="metric bad">
+                                <div class="metric-label">Mudanças</div>
+                                <div class="metric-value">Custosas</div>
+                            </div>
+                            <div class="metric bad">
+                                <div class="metric-label">Encapsulamento</div>
+                                <div class="metric-value">Quebrado</div>
+                            </div>
+                        </div>
+                        <p style="margin-top: 12px; color: #d73a49; font-size: 0.9rem;">🔴 Expõe implementação interna, difícil de manter e escalar</p>
+                    </div>
+
+                    <div class="approach good">
+                        <div class="approach-title">✅ COM Padrão Iterator</div>
+                        <h4>Uso de Iterator</h4>
+                        <div class="code-block">
+for(Produto p : estoque) {
+    // lógica...
+}
+// Ou:
+Iterator&lt;Produto&gt; it = estoque.iterator();
+while(it.hasNext()) {
+    Produto p = it.next();
+}</div>
+                        <div class="metrics-grid">
+                            <div class="metric good">
+                                <div class="metric-label">Acoplamento</div>
+                                <div class="metric-value">Baixo</div>
+                            </div>
+                            <div class="metric good">
+                                <div class="metric-label">Flexibilidade</div>
+                                <div class="metric-value">Alta</div>
+                            </div>
+                            <div class="metric good">
+                                <div class="metric-label">Mudanças</div>
+                                <div class="metric-value">Fáceis</div>
+                            </div>
+                            <div class="metric good">
+                                <div class="metric-label">Encapsulamento</div>
+                                <div class="metric-value">Protegido</div>
+                            </div>
+                        </div>
+                        <p style="margin-top: 12px; color: #28a745; font-size: 0.9rem;">🟢 Limpo, seguro, escalável e fácil de manter</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção: Estrutura das Classes -->
+        <div class="card">
+            <button class="expandable-header" onclick="toggleSection(this)">
+                <h2>
+                    <span class="expandable-icon">+</span>
+                    🏗️ Estrutura do Sistema
+                </h2>
+            </button>
+            <div class="expandable-content">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker">1</div>
+                        <div class="timeline-content">
+                            <h4>TipoProduto (Enum)</h4>
+                            <p>Define os tipos de produto disponíveis: <strong>BEBIDA</strong> e <strong>COMIDA</strong>.</p>
+                            <div class="code-block">public enum TipoProduto {
+    BEBIDA, COMIDA
+}</div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker">2</div>
+                        <div class="timeline-content">
+                            <h4>Produto (Model)</h4>
+                            <p>Representa um produto com propriedades: nome, disponibilidade e tipo.</p>
+                            <div class="code-block">class Produto {
+    String nome;
+    boolean disponivel;
+    TipoProduto tipo;
+}</div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker">3</div>
+                        <div class="timeline-content">
+                            <h4>Estoque (Iterable)</h4>
+                            <p>Implementa <code>Iterable&lt;Produto&gt;</code>, fornecendo acesso sequencial via Iterator.</p>
+                            <div class="code-block">class Estoque implements Iterable&lt;Produto&gt; {
+    private List&lt;Produto&gt; produtos;
+    
+    @Override
+    public Iterator&lt;Produto&gt; iterator() {
+        return produtos.iterator();
+    }
+}</div>
+                        </div>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="timeline-marker">4</div>
+                        <div class="timeline-content">
+                            <h4>GerenciadorEstoque (Utility)</h4>
+                            <p>Fornece métodos estáticos que utilizam Iterator para contar produtos com diferentes critérios.</p>
+                            <div class="code-block">class GerenciadorEstoque {
+    static Integer contarProdutosDisponiveis(Estoque estoque)
+    static Integer contarBebidasDisponiveis(Estoque estoque)
+    // ... outros métodos
+}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção: Casos de Uso -->
+        <div class="card">
+            <button class="expandable-header" onclick="toggleSection(this)">
+                <h2>
+                    <span class="expandable-icon">+</span>
+                    💡 Casos de Uso no Sistema
+                </h2>
+            </button>
+            <div class="expandable-content">
+                <div class="two-column">
+                    <div>
+                        <h3>✅ Contagem de Produtos Disponíveis</h3>
+                        <p>Itera sobre todo o estoque contando apenas os produtos com <code>disponivel = true</code>.</p>
+                        <div class="code-block">
+for (Produto produto : estoque) {
+    if (produto.isDisponivel()) {
+        quantidade++;
+    }
+}</div>
+                        <div class="validation-box success">
+                            <div class="validation-item valid">Encapsulamento: Não acessa ArrayList diretamente</div>
+                            <div class="validation-item valid">Flexibilidade: Funciona com qualquer Iterable</div>
+                            <div class="validation-item valid">Performance: O(n) eficiente</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3>✅ Contagem por Tipo (BEBIDA/COMIDA)</h3>
+                        <p>Filtra produtos por tipo durante a iteração, contando apenas bebidas ou comidas.</p>
+                        <div class="code-block">
+for (Produto produto : estoque) {
+    if (produto.getTipo() == TipoProduto.BEBIDA
+        && produto.isDisponivel()) {
+        quantidade++;
+    }
+}</div>
+                        <div class="validation-box success">
+                            <div class="validation-item valid">Separação de Responsabilidades</div>
+                            <div class="validation-item valid">Lógica Clara e Legível</div>
+                            <div class="validation-item valid">Fácil de Testar</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rodapé -->
+        <div class="section-divider"></div>
+        <div style="text-align: center; padding: 20px; color: var(--muted); font-size: 0.9rem;">
+            <p>Padrão Iterator - Implementado com Java 11+ | JUnit 5 | Design Pattern Comportamental</p>
+            <p>🎓 Educacional | 💼 Profissional | 🚀 Escalável</p>
+        </div>
+    </div>
+
+    <script>
+        // Estado global do estoque
+        let estoque = [];
+        let iteradorAtual = null;
+        let indiceIterador = 0;
+
+        // Icons para tipos de produto
+        const iconsMapa = {
+            'BEBIDA': '🥤',
+            'COMIDA': '🍰'
+        };
+
+        // Alternar seções expansíveis
+        function toggleSection(button) {
+            button.classList.toggle('collapsed');
+        }
+
+        // Adicionar produto ao estoque
+        function adicionarProduto() {
+            const nome = document.getElementById('produtoNome').value.trim();
+            const tipoSelecionado = document.querySelector('input[name="produtoTipo"]:checked');
+            const tipo = tipoSelecionado ? tipoSelecionado.value : '';
+            const disponivel = document.getElementById('produtoDisponivel').checked;
+
+            if (!nome || !tipo) {
+                alert('Por favor, preencha nome e selecione o tipo do produto');
+                return;
+            }
+
+            estoque.push({
+                nome: nome,
+                tipo: tipo,
+                disponivel: disponivel,
+                id: Date.now()
+            });
+
+            atualizarVisualizacao();
+            atualizarResultados();
+            
+            // Limpar inputs
+            document.getElementById('produtoNome').value = '';
+            document.querySelector('input[name="produtoTipo"]:checked').checked = false;
+            document.getElementById('produtoDisponivel').checked = true;
+        }
+
+        // Atualizar visualização de produtos
+        function atualizarVisualizacao() {
+            const lista = document.getElementById('produtosLista');
+            
+            if (estoque.length === 0) {
+                lista.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><p>Nenhum produto adicionado ainda</p></div>';
+                return;
+            }
+
+            lista.innerHTML = estoque.map(p => `
+                <div class="product-item ${!p.disponivel ? 'unavailable' : ''}" onclick="removerProduto(${p.id})">
+                    <div class="icon">${iconsMapa[p.tipo]}</div>
+                    <div class="name">${p.nome}</div>
+                    <div class="type">${p.tipo === 'BEBIDA' ? '🥤 Bebida' : '🍰 Comida'}</div>
+                    <div class="status ${p.disponivel ? 'available' : 'unavailable'}">
+                        ${p.disponivel ? '✓ Disponível' : '✗ Indisponível'}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Remover produto
+        function removerProduto(id) {
+            estoque = estoque.filter(p => p.id !== id);
+            atualizarVisualizacao();
+            atualizarResultados();
+        }
+
+        // Limpar estoque
+        function limparEstoque() {
+            if (confirm('Tem certeza que deseja limpar todo o estoque?')) {
+                estoque = [];
+                iteradorAtual = null;
+                atualizarVisualizacao();
+                atualizarResultados();
+                document.getElementById('iteratorVisual').innerHTML = '<div class="empty-state"><div class="empty-state-icon">👁️</div><p>Adicione produtos para visualizar a iteração</p></div>';
+            }
+        }
+
+        // Atualizar resultados (simulando Iterator)
+        function atualizarResultados() {
+            if (estoque.length === 0) {
+                document.getElementById('resultadoIterador').textContent = 'Adicione produtos para ver os resultados das iterações';
+                return;
+            }
+
+            // Simulando as funções do GerenciadorEstoque usando forEach (que usa Iterator internamente)
+            let totalDisponiveis = 0;
+            let bebidasDisponiveis = 0;
+            let comidasDisponiveis = 0;
+            let totalBebidas = 0;
+            let totalComidas = 0;
+
+            estoque.forEach(p => {
+                if (p.disponivel) totalDisponiveis++;
+                if (p.tipo === 'BEBIDA') {
+                    totalBebidas++;
+                    if (p.disponivel) bebidasDisponiveis++;
+                } else {
+                    totalComidas++;
+                    if (p.disponivel) comidasDisponiveis++;
+                }
+            });
+
+            document.getElementById('resultadoIterador').innerHTML = `
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                    <div style="text-align: center; padding: 8px; background: #d4edda; border-radius: 4px;">
+                        <strong style="color: #28a745; font-size: 1.3rem;">${totalDisponiveis}</strong><br>
+                        <small>Produtos Disponíveis</small>
+                    </div>
+                    <div style="text-align: center; padding: 8px; background: #d1ecf1; border-radius: 4px;">
+                        <strong style="color: #0366d6; font-size: 1.3rem;">${bebidasDisponiveis}</strong><br>
+                        <small>Bebidas Disponíveis</small>
+                    </div>
+                    <div style="text-align: center; padding: 8px; background: #fff3cd; border-radius: 4px;">
+                        <strong style="color: #d97706; font-size: 1.3rem;">${comidasDisponiveis}</strong><br>
+                        <small>Comidas Disponíveis</small>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; padding: 8px; background: #f6f8fa; border-radius: 4px; font-size: 0.85rem;">
+                    <strong>Detalhamento por Tipo:</strong><br>
+                    • Total de Bebidas: ${totalBebidas} (${bebidasDisponiveis} disponíveis)<br>
+                    • Total de Comidas: ${totalComidas} (${comidasDisponiveis} disponíveis)<br>
+                    • Total Geral: ${estoque.length} produtos
+                </div>
+            `;
+        }
+
+        // Iniciar iteração visual
+        function iniciarIteracao() {
+            if (estoque.length === 0) {
+                alert('Adicione produtos primeiro!');
+                return;
+            }
+            
+            iteradorAtual = estoque.map((p, i) => i);
+            indiceIterador = 0;
+            renderizarIterador();
+        }
+
+        // Próximo elemento
+        function proximoElemento() {
+            if (iteradorAtual === null) {
+                alert('Clique em "Iniciar Iteração" primeiro!');
+                return;
+            }
+
+            if (indiceIterador < iteradorAtual.length) {
+                indiceIterador++;
+                renderizarIterador();
+            } else {
+                alert('Iteração concluída! Todos os elementos foram visitados.');
+            }
+        }
+
+        // Reiniciar iteração
+        function reiniciarIteracao() {
+            iteradorAtual = null;
+            indiceIterador = 0;
+            document.getElementById('iteratorVisual').innerHTML = '<div class="empty-state"><div class="empty-state-icon">👁️</div><p>Clique em "Iniciar Iteração" para começar</p></div>';
+        }
+
+        // Renderizar visualização do iterador
+        function renderizarIterador() {
+            const visual = document.getElementById('iteratorVisual');
+            let html = '<div class="iterator-row">';
+
+            estoque.forEach((p, i) => {
+                const isActive = i === indiceIterador;
+                const isVisited = i < indiceIterador;
+                const className = isActive ? 'active' : (isVisited ? 'visited' : '');
+                
+                html += `
+                    <div class="iterator-item ${className}" title="${p.nome}">
+                        ${iconsMapa[p.tipo]}
+                    </div>
+                `;
+
+                if (i < estoque.length - 1 && isActive) {
+                    html += '<div class="iterator-arrow">→</div>';
+                }
+            });
+
+            html += '</div>';
+            html += `
+                <div style="margin-top: 12px; padding: 12px; background: #f6f8fa; border-radius: 6px;">
+                    <strong>Estado do Iterator:</strong><br>
+                    ${indiceIterador < estoque.length ? 
+                        `Elemento atual (índice ${indiceIterador}): <strong>${estoque[indiceIterador].nome}</strong> ${iconsMapa[estoque[indiceIterador].tipo]}` : 
+                        'Iterator finalizado - todos os elementos foram visitados'}
+                </div>
+            `;
+
+            visual.innerHTML = html;
+        }
+
+        // Inicializar página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ Interface do Padrão Iterator carregada com sucesso!');
+        });
+    </script>
+</body>
+</html>
